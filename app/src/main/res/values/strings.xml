@@ -1,0 +1,16 @@
+<resources>
+    <string name="app_name">ui test</string>
+    <string name="agregar_nuevo_contacto">Agregar Nuevo Contacto</string>
+    <string name="lista_de_contactos">Lista de Contactos</string>
+    <string name="dialog_confirm_title">Esta Seguro de querer realizar la acción.</string>
+    <string name="dialog_confirm_content">El proceso es irreversible.</string>
+    <string name="dialog_confirm_confirm">Confirmar</string>
+    <string name="dialog_confirm_cancel">Cancelar</string>
+    <string name="form_name">Name:</string>
+    <string name="form_image_alt">Name:</string>
+    <string name="form_email">Email:</string>
+    <string name="form_phone">Phone:</string>
+    <string name="form_age">Age:</string>
+    <string name="form_submit">Submit</string>
+    <string name="empty_msg">Empty values</string>
+</resources>
