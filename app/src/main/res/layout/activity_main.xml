@@ -36,13 +36,11 @@
             android:text="Preferencias" />
     </LinearLayout>
 
-
-    <GridView
-        android:id="@+id/lista_contactos"
-        android:numColumns="1"
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/recyclerview_lista_contactos"
         android:layout_below="@id/titulo"
         android:layout_above="@id/contenedor"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content" />
 
 </RelativeLayout>

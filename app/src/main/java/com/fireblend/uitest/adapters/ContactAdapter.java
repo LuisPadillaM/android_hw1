@@ -1,12 +1,16 @@
 package com.fireblend.uitest.adapters;
 
 import android.content.Context;
+import android.graphics.Color;
+import android.support.annotation.NonNull;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -14,14 +18,16 @@ import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.fireblend.uitest.R;
 import com.fireblend.uitest.bd.DataBaseHelper;
-import com.fireblend.uitest.entities.Contact;
+import com.fireblend.uitest.bd.Contact;
 import com.fireblend.uitest.ui.ContactActivity;
 import com.fireblend.uitest.ui.MainActivity;
+import com.fireblend.uitest.utilities.PreferenceManager;
+import com.j256.ormlite.stmt.query.In;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class ContactAdapter extends  BaseAdapter {
+public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.ViewHolder> {
 
     private final String TAG = "CONTACTADAPTER";
     private Context parentContext;
@@ -34,102 +40,136 @@ public class ContactAdapter extends  BaseAdapter {
         this.contacts = contacts;
     }
 
-    //Retorna el numero de elementos en la lista.
-    public int getCount() {
-        return contacts.size();
-    }
-
     @Override
-    //Retorna el elemento que pertenece a la posición especificada.
-    public Object getItem(int position) {
-        return contacts.get(position);
-    }
-
-    @Override
-    //Devuelve un identificador único para cada elemento de la lista.
-    //En nuestro caso, basta con devolver la posición del elemento en la lista.
-    public long getItemId(int position) {
-        return position;
-    }
-
-    @Override
-    //Devuelve la vista que corresponde a cada elemento de la lista
-    public View getView(int position, View convertView, final ViewGroup parent) {
+    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) { // es como getView del gridView
         parentContext = parent.getContext();
         bdHelper = DataBaseHelper.getInstance(parentContext);
         LayoutInflater inflater = LayoutInflater.from(parentContext);
-        View row = inflater.inflate(R.layout.contact_item, parent, false);
-
-        Contact current = (Contact)this.getItem(position);
-
-        TextView name = (TextView) row.findViewById(R.id.name);
-        TextView age = (TextView) row.findViewById(R.id.age);
-        TextView phone = (TextView) row.findViewById(R.id.phone);
-        TextView email = (TextView) row.findViewById(R.id.email);
-
-        name.setText(current.name);
-        age.setText(String.valueOf(contacts.get(position).age));
-        phone.setText(current.phone);
-        email.setText(current.email);
-
-        Button btnDisplay = (Button) row.findViewById(R.id.row_btn);
-        Button btnDelete = (Button) row.findViewById(R.id.button_delete_contact);
-
-        //Basandonos en la posicion provista en este metodo, proveemos los datos
-        //correctos para este elemento.
-        final int contactPosition = position;
-
-        btnDisplay.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Toast.makeText(parentContext, "Hola, "+contacts.get(contactPosition).name, Toast.LENGTH_SHORT).show();
-            }
-        });
-
-        confirmDialog = this.createConfirmDialogue(parentContext);
-
-
-        btnDelete.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Log.d(TAG, "contactPosition");
-                Log.d(TAG, contactPosition+"");
-                showConfirmDialog(parentContext, contactPosition);
-            }
-        });
-
-
-        return row;
+        View view = inflater.inflate(R.layout.contact_item, parent, false);
+        return new ViewHolder(view);
     }
 
-    private MaterialDialog createConfirmDialogue (Context context){
-        MaterialDialog.Builder builder = new MaterialDialog.Builder(context)
-                .title(R.string.dialog_confirm_title)
-                .content(R.string.dialog_confirm_content)
-                .positiveText(R.string.dialog_confirm_confirm)
-                .negativeText(R.string.dialog_confirm_cancel)
-                .onNegative(new MaterialDialog.SingleButtonCallback() {
-                    @Override
-                    public void onClick(MaterialDialog dialog, DialogAction which) {
-                        dialog.dismiss();
-                    }
-                });
-
-        MaterialDialog dialog = builder.build();
-        return dialog;
+    @Override
+    public void onBindViewHolder(ViewHolder holder, int position) {
+        holder.assignData(this.contacts.get(position), position);
+    }
+    @Override
+    public int getItemCount() { // como getCount
+        return contacts.size();
     }
 
-    public void showConfirmDialog(Context context, final int contactPosition) {
-        confirmDialog.getBuilder().onPositive(new MaterialDialog.SingleButtonCallback() {
-            @Override
-            public void onClick(MaterialDialog dialog, DialogAction which) {
-                Log.d(TAG, "contactPosition");
-                com.fireblend.uitest.bd.Contact current = ContactActivity.getDBContact(bdHelper, contactPosition);
-                Log.d(TAG, "GOT CURRENT");
-                ContactActivity.removeDBContact(bdHelper, current);
-                ((MainActivity) parentContext).setupList();
+
+    public class ViewHolder extends RecyclerView.ViewHolder {
+
+        TextView name;
+        TextView age;
+        TextView phone;
+        TextView email;
+        Button btnDisplay;
+        Button btnDelete;
+        LinearLayout contactCard;
+        String bgColor;
+        Integer textFontSize;
+
+        public ViewHolder(View view) {
+            super(view);
+            name  = view.findViewById(R.id.name);
+            age   =  view.findViewById(R.id.age);
+            phone = view.findViewById(R.id.phone);
+            email = view.findViewById(R.id.email);
+            btnDisplay = (Button) view.findViewById(R.id.row_btn);
+            btnDelete = (Button) view.findViewById(R.id.button_delete_contact);
+            contactCard = view.findViewById(R.id.contact_container);
+
+            Context context = view.getContext();
+            bgColor = PreferenceManager.getBgColorFromPreferences(context);
+            textFontSize = PreferenceManager.getTextsizeFromPreferences(context);
+
+            LinearLayout cardLayout = view.findViewById(R.id.layout_card);
+            this.setEditTextSizeFromView(cardLayout, textFontSize);
+
+            boolean deleteVisible = PreferenceManager.getDeleteVisibilityFromPreferences(context);
+
+            if(deleteVisible){
+                btnDelete.setVisibility(View.VISIBLE);
+            } else {
+                btnDelete.setVisibility(View.GONE);
             }
-        });
-        confirmDialog.show();
+        }
+
+        public void setEditTextSizeFromView(LinearLayout myLayout, Integer fontSize){
+
+            for( int i = 0; i < myLayout.getChildCount(); i++ ) {
+                if (myLayout.getChildAt(i) instanceof TextView)
+                    ((TextView)myLayout.getChildAt(i)).setTextSize(fontSize);
+            }
+        }
+
+
+        public void assignData(final Contact current, int position) {
+            if(!bgColor.equals("")) {
+                contactCard.setBackgroundColor(Color.parseColor(bgColor));
+            }
+            name.setText(current.name);
+            age.setText(String.valueOf(current.age));
+            phone.setText(current.phone);
+            email.setText(current.email);
+
+
+            //Basandonos en la posicion provista en este metodo, proveemos los datos
+            //correctos para este elemento.
+            final int contactPosition = position;
+
+            btnDisplay.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Toast.makeText(parentContext, "Hola, "+ current.name, Toast.LENGTH_SHORT).show();
+                }
+            });
+
+            confirmDialog = this.createConfirmDialogue(parentContext);
+
+
+            btnDelete.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Log.d(TAG, "contactPosition");
+                    Log.d(TAG, current.contactId+"");
+                    showConfirmDialog(parentContext, current.contactId);
+                }
+            });
+        }
+
+        private MaterialDialog createConfirmDialogue (Context context){
+            MaterialDialog.Builder builder = new MaterialDialog.Builder(context)
+                    .title(R.string.dialog_confirm_title)
+                    .content(R.string.dialog_confirm_content)
+                    .positiveText(R.string.dialog_confirm_confirm)
+                    .negativeText(R.string.dialog_confirm_cancel)
+                    .onNegative(new MaterialDialog.SingleButtonCallback() {
+                        @Override
+                        public void onClick(MaterialDialog dialog, DialogAction which) {
+                            dialog.dismiss();
+                        }
+                    });
+
+            MaterialDialog dialog = builder.build();
+            return dialog;
+        }
+
+        public void showConfirmDialog(Context context, final int contactId) {
+            confirmDialog.getBuilder().onPositive(new MaterialDialog.SingleButtonCallback() {
+                @Override
+                public void onClick(MaterialDialog dialog, DialogAction which) {
+                    Log.d(TAG, "contactPosition");
+                    com.fireblend.uitest.bd.Contact current = ContactActivity.getDBContact(bdHelper, contactId);
+                    Log.d(TAG, "GOT CURRENT");
+                    ContactActivity.removeDBContact(bdHelper, current);
+                    ((MainActivity) parentContext).setupList();
+                }
+            });
+            confirmDialog.show();
+        }
+
     }
 }

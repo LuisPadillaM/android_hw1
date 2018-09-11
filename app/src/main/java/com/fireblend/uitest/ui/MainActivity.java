@@ -4,13 +4,17 @@ import android.app.Activity;
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.GridLayoutManager;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
 import android.widget.GridView;
 import com.fireblend.uitest.R;
 import com.fireblend.uitest.bd.DataBaseHelper;
-import com.fireblend.uitest.entities.Contact;
+import com.fireblend.uitest.bd.Contact;
 import com.fireblend.uitest.adapters.ContactAdapter;
+import com.fireblend.uitest.utilities.PreferenceManager;
 import com.j256.ormlite.dao.Dao;
 
 
@@ -26,7 +30,7 @@ public class MainActivity extends AppCompatActivity {
 
     private final String TAG = "MAINACTIVITY";
     DataBaseHelper bdHelper;
-    @BindView(R.id.lista_contactos) GridView list;
+    @BindView(R.id.recyclerview_lista_contactos) RecyclerView list;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,6 +59,15 @@ public class MainActivity extends AppCompatActivity {
     public void setupList() {
         final List<Contact> contacts = this.getContactsFromDB();
         //Le asignamos a la lista un nuevo BaseAdapter, implementado a continuación
+        boolean enableGrid = PreferenceManager.getEnableGridFromPreferences(this);
+
+        RecyclerView.LayoutManager displayLayout = new LinearLayoutManager(this);
+        if(enableGrid){
+            displayLayout = new GridLayoutManager(this,2);
+        }
+
+        list.setLayoutManager(displayLayout);
+
         list.setAdapter(new ContactAdapter(contacts));
     }
 
@@ -63,12 +76,8 @@ public class MainActivity extends AppCompatActivity {
         List<Contact> contactsList = new ArrayList<>();
 
         try {
-            Dao<com.fireblend.uitest.bd.Contact, Integer> contactDao = bdHelper.getContactDao();
-            List<com.fireblend.uitest.bd.Contact> contacts = contactDao.queryForAll();
-            for (int i = 0; i < contacts.size(); i++) {
-                com.fireblend.uitest.bd.Contact contactEntity = contacts.get(i);
-                contactsList.add(new Contact(contactEntity.name, contactEntity.age, contactEntity.email, contactEntity.phone));
-            }
+            Dao<Contact, Integer> contactDao = bdHelper.getContactDao();
+            contactsList = contactDao.queryForAll();
 
         } catch (SQLException e) {
             e.printStackTrace();

@@ -25,7 +25,7 @@ public class Contact {
         // needed by ormlite
     }
 
-    public Contact(String name, int age, String email, String phone) {
+    public Contact(String name, int age, String email, String phone){
         this.name = name;
         this.age = age;
         this.email = email;
