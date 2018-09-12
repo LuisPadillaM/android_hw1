@@ -31,6 +31,10 @@ public class Contact {
         this.email = email;
         this.phone = phone;
     }
+
+    public String toString(){
+        return String.format("Nombre :%s; Edad:%s; Email :%s; Telefono:%s", this.name, String.valueOf(this.age), this.email, this.phone);
+    }
 }
 
 
